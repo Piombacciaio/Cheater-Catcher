@@ -148,7 +148,10 @@ def main():
 
               playing = False
               end_time = time.time()
-              score = round((score + 100 + (100 / (end_time - start_time) * score_modifier) - (len(tries) * (1/score_modifier))), 2)
+              part_score = round((100 + (100 / (end_time - start_time) * score_modifier) - (len(tries) * (1/score_modifier))), 2)
+              score = score + part_score
+              print(f"[{Fore.GREEN}+++{Fore.RESET}] YOU WON [{Fore.GREEN}+++{Fore.RESET}]\nAgent {choice} was the cheater\nYour score for the game is: {Fore.GREEN + str(part_score) + Fore.RESET}. For a total score of {Fore.GREEN + str(score) + Fore.RESET}. Press <ENTER> to continue...", end="")
+              input()
 
             else:
 
@@ -165,8 +168,9 @@ def main():
         else: #Lose game and calc score + 0
           playing = False
           end_time = time.time()
-          score = round((score + (100 / (end_time - start_time) * score_modifier) - (len(tries) * (1/score_modifier))), 2)
-          print(f"[{Fore.RED}+++{Fore.RESET}] GAME OVER [{Fore.RED}+++{Fore.RESET}]\nThe cheater was {Fore.RED}Agent {cheater}{Fore.RESET}.\nPress <ENTER> to continue...", end="")
+          part_score = round((100 + (100 / (end_time - start_time) * score_modifier) - (len(tries) * (1/score_modifier))), 2)
+          score = score + part_score
+          print(f"[{Fore.RED}+++{Fore.RESET}] GAME OVER [{Fore.RED}+++{Fore.RESET}]\nThe cheater was {Fore.RED}Agent {cheater}{Fore.RESET}.\nYour score for the game is: {Fore.GREEN + str(part_score) + Fore.RESET}. For a total score of {Fore.GREEN + str(score) + Fore.RESET}. Press <ENTER> to continue...", end="")
           input()
 
       tries = []
