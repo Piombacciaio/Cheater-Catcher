@@ -14,6 +14,10 @@ difficulties = {"1": #Hard
                    "coin_modifier": 1.75,
                    "score_modifier": 0.75}}
 
+START_SCORE = 0
+LOSS_SCORE = 0
+WIN_SCORE = 100
+
 def choose_cheater() -> int:
   return random.choice([x+1 for x in range(20)])
 
@@ -31,6 +35,10 @@ def get_throws(difficulty:str, cheater:int) -> dict:
         heads += 1
     agents.append(heads)
   return agents
+
+def calc_score(initial_score:float, end_game_score:float, end_time:float, start_time:float, score_modifier:float, tries: int | list) -> float:
+  part_score = (end_game_score + (100 / (end_time - start_time) * score_modifier) - (len(tries) * (1/score_modifier)))
+  return round(initial_score + part_score, 2), round(part_score, 2)
 
 def print_table(agents:list, lives_remaining:int, tries:list = None):
   line1 = ["agent " + str(x+1).rjust(2) + ": " + str(agents[x]) for x in range(5)]
@@ -54,8 +62,11 @@ def leave(score:float):
     save = input("Do you want to save? [Y/N] >> ").upper()
 
   if save == "Y":
-    with open("scores.json", "r") as f:
-      scores = json.load(f)
+    try:
+      with open("scores.json", "r") as f:
+        scores:dict = json.load(f)
+    except:
+      scores:dict = {}
     username = input("Choose a username >> ")
     scores[username] = score
     with open("scores.json", "w") as f:
@@ -68,21 +79,27 @@ def print_leaderboard():
   def sort_board(board:list):
     board.sort(key=lambda x: x[1], reverse=True)
     return board
-
-  with open("scores.json", "r") as f:
-    scores:dict = json.load(f)
+  
+  #Load scores from scores.json
+  try:
+    with open("scores.json", "r") as f:
+      scores:dict = json.load(f)
+  except:
+    scores = {}
+  
+  #Sort board
   board = []
   for key, value in scores.items():
     board.append((key, value))
-
   sorted_board = sort_board(board)
 
+  #Print sorted board
   os.system("cls")
   print(f"{Fore.YELLOW}Leaderboard{Fore.RESET}\n")
   if sorted_board == []:
     print(f"[{Fore.RED}+{Fore.RESET}] No scores yet.")
   for x, item in enumerate(sorted_board):
-    print(f"{Fore.BLUE}{x+1}{Fore.RESET}) {item[0]} - Score: {item[1]}") 
+    print(f"{Fore.BLUE}{x+1}{Fore.RESET}) {item[0]} - Score: {item[1]}")
 
   print("\nPress <ENTER> to go back...", end="")
   input()
@@ -93,7 +110,7 @@ def main():
 
   #Init
   tries = []
-  score:float = 0
+  score:float = START_SCORE
   if not os.path.exists("scores.json"):
     with open("scores.json", "w") as f:
       f.write("{}")
@@ -142,14 +159,20 @@ def main():
 
           choice = input("The cheater is Agent ")
 
+          while choice not in [str(x+1) for x in range(20)]:
+            print(f"[{Fore.RED}+{Fore.RESET}] Invalid choice, please provide a number between 1-20. Press <ENTER> to continue...")
+            input()
+            os.system("cls")
+            print_table(agents, lives, tries)
+            choice = input("The cheater is Agent ")
+                   
           if choice not in tries:
 
             if choice == str(cheater): #Win game and calc score + 100
 
               playing = False
               end_time = time.time()
-              part_score = round((100 + (100 / (end_time - start_time) * score_modifier) - (len(tries) * (1/score_modifier))), 2)
-              score = score + part_score
+              score, part_score = calc_score(score, WIN_SCORE, end_time, start_time, score_modifier, tries)
               print(f"[{Fore.GREEN}+++{Fore.RESET}] YOU WON [{Fore.GREEN}+++{Fore.RESET}]\nAgent {choice} was the cheater\nYour score for the game is: {Fore.GREEN + str(part_score) + Fore.RESET}. For a total score of {Fore.GREEN + str(score) + Fore.RESET}. Press <ENTER> to continue...", end="")
               input()
 
@@ -168,8 +191,7 @@ def main():
         else: #Lose game and calc score + 0
           playing = False
           end_time = time.time()
-          part_score = round((100 + (100 / (end_time - start_time) * score_modifier) - (len(tries) * (1/score_modifier))), 2)
-          score = score + part_score
+          score, part_score = calc_score(score, LOSS_SCORE, end_time, start_time, score_modifier, tries)
           print(f"[{Fore.RED}+++{Fore.RESET}] GAME OVER [{Fore.RED}+++{Fore.RESET}]\nThe cheater was {Fore.RED}Agent {cheater}{Fore.RESET}.\nYour score for the game is: {Fore.GREEN + str(part_score) + Fore.RESET}. For a total score of {Fore.GREEN + str(score) + Fore.RESET}. Press <ENTER> to continue...", end="")
           input()
 
